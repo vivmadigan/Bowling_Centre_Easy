@@ -25,10 +25,8 @@ namespace Bowling_Centre_Easy.Services
         // Creates a new match with the given list of players.
         // This method initializes the match date, assigns the players,
         // and creates a new Scorecard instance that is associated with the match.
-        public Match CreateMatch(List<Player> players, BowlingLane lane)
+        public Match CreateMatch(List<Player> players, BowlingLane lane, Scorecard scorecard)
         {
-            // Create a new scorecard. 
-            Scorecard scorecard = new Scorecard();
 
             // Create a new match instance.
 

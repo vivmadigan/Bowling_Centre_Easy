@@ -24,5 +24,10 @@ namespace Bowling_Centre_Easy.Repos
         {
             return _players;
         }
+
+        public void Clear()
+        {
+            _players.Clear();
+        }
     }
 }
