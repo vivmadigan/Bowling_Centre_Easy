@@ -8,9 +8,16 @@ namespace Bowling_Centre_Easy.Entities
 {
     public class Scorecard
     {
-        public int ScorecardId { get; set; }
+        public Guid ScorecardId { get; set; }
         public int PlayerId { get; set; } // Relate scorecard to a player, if needed
         public List<Frame> Frames { get; set; } = new List<Frame>();
+
+        public int Result { get; set; }
+
+        public Scorecard()
+        {
+            ScorecardId = Guid.NewGuid();
+        }
 
         public int CalculateTotalScore()
         {

@@ -9,9 +9,15 @@ namespace Bowling_Centre_Easy.Entities
 {
     public class RegisteredMember : IMember
     {
-        public int MemberID { get; set; }}
-        public string Name { get; set; }
+        public Guid MemberID { get; set; }
         public string Email { get; set; }
+        public string Name { get; set; }
         public int GamesWon { get; set; }
+
+        // Constructor that automatically assigns a new Guid.
+        public RegisteredMember()
+        {
+            MemberID = Guid.NewGuid();
+        }
     }
 }
