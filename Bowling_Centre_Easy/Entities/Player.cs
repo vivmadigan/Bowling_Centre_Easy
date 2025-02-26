@@ -9,8 +9,13 @@ namespace Bowling_Centre_Easy.Entities
 {
     public class Player
     {
-        public int PlayerID { get; set; }
+        public Guid PlayerID { get; set; }
         public IMember MemberInfo { get; set; }
         public int CurrentScore { get; set; }
+
+        public Player()
+        {
+            PlayerID = Guid.NewGuid();
+        }
     }
 }

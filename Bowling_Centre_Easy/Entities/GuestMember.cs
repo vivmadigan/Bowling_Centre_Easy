@@ -9,8 +9,7 @@ namespace Bowling_Centre_Easy.Entities
 {
     public class GuestMember : IMember
     {
-        public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string Email { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public int GamesWon { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string Name { get; set; }
+        public int GamesWon { get; set; }
     }
 }
