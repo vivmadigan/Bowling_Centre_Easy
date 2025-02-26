@@ -25,7 +25,10 @@ namespace Bowling_Centre_Easy.Services
             // You could add validation logic here.
             _playerRepo.AddPlayer(player);
         }
+        public void ClearPlayers()
+        {
+            _playerRepo.Clear();
+        }
 
-        
     }
 }

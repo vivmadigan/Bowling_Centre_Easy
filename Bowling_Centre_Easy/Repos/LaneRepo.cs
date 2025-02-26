@@ -36,5 +36,12 @@ namespace Bowling_Centre_Easy.Repos
                 lane.InUse = inUse;
             }
         }
+        public void Clear()
+        {
+            foreach (var lane in _lanes)
+            {
+                lane.InUse = false;
+            }
+        }
     }
 }
