@@ -25,6 +25,21 @@ namespace Bowling_Centre_Easy.Services
             // You could add validation logic here.
             _playerRepo.AddPlayer(player);
         }
+        public Player Login(string username, string password)
+        {
+            // Look up the player by username.
+            Player player = _playerRepo.GetPlayerByUsername(username);
+            // Check if a player was found and if the member is a RegisteredMember.
+            if (player != null && player.MemberInfo is RegisteredMember regMember)
+            {
+                // Verify the password.
+                if (regMember.Password == password)
+                {
+                    return player;
+                }
+            }
+            return null;
+        }
         public void ClearPlayers()
         {
             _playerRepo.Clear();

@@ -19,11 +19,11 @@ namespace Bowling_Centre_Easy.Repos
             _players.Add(player);
         }
 
-        // Returns all players as an IEnumerable<Player>
-        public IEnumerable<Player> GetAll()
+        public Player GetPlayerByUsername(string username)
         {
-            return _players;
+            return _players.FirstOrDefault(p => p.MemberInfo.Name.Equals(username, StringComparison.OrdinalIgnoreCase));
         }
+
 
         public void Clear()
         {

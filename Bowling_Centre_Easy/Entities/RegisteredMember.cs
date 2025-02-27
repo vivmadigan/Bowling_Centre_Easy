@@ -12,6 +12,7 @@ namespace Bowling_Centre_Easy.Entities
         public Guid MemberID { get; set; }
         public string Email { get; set; }
         public string Name { get; set; }
+        public string Password { get; set; }
         public int GamesWon { get; set; }
 
         // Constructor that automatically assigns a new Guid.

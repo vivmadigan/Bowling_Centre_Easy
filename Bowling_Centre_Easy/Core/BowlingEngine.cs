@@ -24,22 +24,80 @@ namespace Bowling_Centre_Easy.Core
             _matchService = matchService;
         }
 
+        // Public method for registering new users. This encapsulates the lower-level details.
+        public void RegisterUsers()
+        {
+            Console.WriteLine("Registering new users...");
+            List<Player> newPlayers = RegisterNewUsers();
+            // Optionally, display a summary of the new users.
+        }
+
+        // Private helper method that collects registration info and returns a list of newly registered players.
+        private List<Player> RegisterNewUsers()
+        {
+            var players = new List<Player>();
+            bool addMore = true;
+
+            while (addMore)
+            {
+                Console.WriteLine("Please enter your username:");
+                string userName = Console.ReadLine();
+                while (string.IsNullOrWhiteSpace(userName))
+                {
+                    Console.WriteLine("Username cannot be empty. Please enter your username:");
+                    userName = Console.ReadLine();
+                }
+
+                Console.WriteLine("Please enter your password (must be at least 6 characters):");
+                string userPassword = Console.ReadLine();
+                while (userPassword.Length < 6)
+                {
+                    Console.WriteLine("Password is too short, please try again:");
+                    userPassword = Console.ReadLine();
+                }
+
+                Console.WriteLine("Please enter your email:");
+                string userEmail = Console.ReadLine();
+                while (!IsValidEmail(userEmail))
+                {
+                    Console.WriteLine("Invalid email format, please enter a valid email:");
+                    userEmail = Console.ReadLine();
+                }
+
+                // Use the factory to create a registered member.
+                IMember newMember = MemberFactory.CreateMember("register", userName, userPassword, userEmail);
+                Player newPlayer = new Player
+                {
+                    MemberInfo = newMember,
+                    CurrentScore = 0
+                };
+
+                _playerService.RegisterPlayer(newPlayer);
+                players.Add(newPlayer);
+
+                Console.WriteLine("Would you like to register another new user? (Y/N):");
+                string choice = Console.ReadLine();
+                addMore = choice.Equals("Y", StringComparison.OrdinalIgnoreCase) ||
+                          choice.Equals("Yes", StringComparison.OrdinalIgnoreCase);
+            }
+
+            return players;
+        }
+
+        // Starts the game by gathering players, frame count, and lane selection, then simulating a match.
         public void StartGame()
         {
             bool confirmed = false;
             List<Player> players = null;
             int frameCount = 0;
 
-            // Loop until the user confirms that the information is correct.
+            // Loop until the user confirms that the entered info is correct.
             while (!confirmed)
             {
-                // Gather player information.
-                players = GetPlayersFromUser();
-                // Ask for the number of frames to be played.
+                players = GetPlayersForGame();
                 frameCount = GetFrameCountFromUser();
 
-                // Display a summary of the gathered information.
-                Console.WriteLine("\nYou have registered the following players:");
+                Console.WriteLine("\nYou have the following players:");
                 foreach (var player in players)
                 {
                     Console.WriteLine($"- {player.MemberInfo.Name}");
@@ -47,7 +105,6 @@ namespace Bowling_Centre_Easy.Core
                 Console.WriteLine($"Number of frames to be played: {frameCount}");
                 Console.Write("Is this information correct? (Y/N): ");
                 string response = Console.ReadLine();
-
                 if (response.Equals("Y", StringComparison.OrdinalIgnoreCase) ||
                     response.Equals("Yes", StringComparison.OrdinalIgnoreCase))
                 {
@@ -61,7 +118,7 @@ namespace Bowling_Centre_Easy.Core
             }
 
             // Let the user choose a lane.
-            BowlingLane chosenLane = GetLaneFromUser(_laneRepo);
+            BowlingLane chosenLane = GetLaneFromUser();
 
             // Create a new scorecard and pre-populate it with empty frames.
             Scorecard scorecard = new Scorecard();
@@ -70,15 +127,14 @@ namespace Bowling_Centre_Easy.Core
                 scorecard.Frames.Add(new Frame { FrameNumber = i, Score = 0 });
             }
 
-            // Create the match using MatchService.
+            // Create the match via MatchService.
             Match match = _matchService.CreateMatch(players, chosenLane, scorecard);
 
-            // Run the match.
+            // Run the match simulation.
             RunMatch(match);
         }
 
-
-        // Resets the current game state by clearing the players and lanes.
+        // Private helper: clears current game state (players and lane usage) without affecting historical match data.
         private void ClearCurrentGameState()
         {
             _playerService.ClearPlayers();
@@ -86,68 +142,51 @@ namespace Bowling_Centre_Easy.Core
             Console.WriteLine("Current game state has been cleared.\n");
         }
 
-        private List<Player> GetPlayersFromUser()
+        // Collects the players for the current game. For each player, they can choose to log in or play as a guest.
+        private List<Player> GetPlayersForGame()
         {
             var players = new List<Player>();
+            Console.Write("How many players will be playing? (Max 6): ");
+            int count = int.Parse(Console.ReadLine()); // In production code, use input validation.
 
-            Console.Write("How many players would you like to play? (Max 6 per lane): ");
-            int playerCount;
-            while (!int.TryParse(Console.ReadLine(), out playerCount) || playerCount < 1 || playerCount > 6)
+            for (int i = 0; i < count; i++)
             {
-                Console.WriteLine("Please enter a valid number between 1 and 6.");
-            }
-
-            for (int i = 0; i < playerCount; i++)
-            {
-                Console.WriteLine($"\nRegistering Player {i + 1}:");
-
-                Console.Write("Would you like to register as a member or play as a guest? (register/guest): ");
-                string memberType = Console.ReadLine();
-
-                Console.Write("Enter your name: ");
-                string name = Console.ReadLine();
-
-                string email = null;
-                if (memberType.ToLower() == "register")
+                Console.WriteLine($"\nFor Player {i + 1}: Would you like to log in or play as a guest? (L/G): ");
+                string option = Console.ReadLine();
+                if (option.Equals("L", StringComparison.OrdinalIgnoreCase))
                 {
-                    Console.Write("Enter your email to become a registered member: ");
-                    email = Console.ReadLine();
+                    Player player = LoginPlayer();
+                    if (player != null)
+                        players.Add(player);
+                    else
+                    {
+                        Console.WriteLine("Login failed. Please try again.");
+                        i--; // retry this player.
+                    }
                 }
-
-                // Create a member using the factory.
-                IMember member = MemberFactory.CreateMember(memberType, name, email);
-
-                // Wrap the member info in a Player object.
-                Player player = new Player
+                else
                 {
-                    MemberInfo = member,
-                    CurrentScore = 0
-                };
-
-                // Register the player using the PlayerService.
-                _playerService.RegisterPlayer(player);
-                players.Add(player);
+                    Player guest = CreateGuestPlayer();
+                    players.Add(guest);
+                }
             }
 
             return players;
         }
 
+        // Prompts for the number of frames to play.
         private int GetFrameCountFromUser()
         {
-            Console.Write("How many frames would you like to play? (Max 10 frames per match): ");
-            int frameCount;
-            while (!int.TryParse(Console.ReadLine(), out frameCount) || frameCount < 1 || frameCount > 10)
-            {
-                Console.WriteLine("Please enter a valid number between 1 and 10.");
-            }
+            Console.Write("How many frames would you like to play? (Max 10): ");
+            int frameCount = int.Parse(Console.ReadLine()); // In production, validate input.
             return frameCount;
         }
 
-        private BowlingLane GetLaneFromUser(LaneRepo laneRepo)
+        // Prompts the user to choose a lane. Returns the selected lane.
+        private BowlingLane GetLaneFromUser()
         {
             BowlingLane selectedLane = null;
             bool validChoice = false;
-
             while (!validChoice)
             {
                 Console.Write("Enter the lane number you wish to use (1-10): ");
@@ -157,8 +196,7 @@ namespace Bowling_Centre_Easy.Core
                     Console.WriteLine("Please enter a valid lane number between 1 and 10.");
                     continue;
                 }
-
-                selectedLane = laneRepo.GetLaneByNumber(laneNumber);
+                selectedLane = _laneRepo.GetLaneByNumber(laneNumber);
                 if (selectedLane == null)
                 {
                     Console.WriteLine("Lane not found. Try again.");
@@ -173,11 +211,11 @@ namespace Bowling_Centre_Easy.Core
                     validChoice = true;
                 }
             }
-
-            laneRepo.MarkLaneAsUsed(selectedLane.BowlingLaneID, true);
+            _laneRepo.MarkLaneAsUsed(selectedLane.BowlingLaneID, true);
             return selectedLane;
         }
 
+        // Simulates the match by looping through frames, generating random scores, and determining a winner.
         private void RunMatch(Match match)
         {
             Console.WriteLine("\nStarting match...");
@@ -191,82 +229,133 @@ namespace Bowling_Centre_Easy.Core
             Console.WriteLine($"Total Frames: {match.Scorecard.Frames.Count}");
             Console.WriteLine("Press Enter to begin the bowling...");
             Console.ReadLine();
-            // Create a Random instance for generating scores.
+
             Random rand = new Random();
             Console.WriteLine("\n--- Starting Bowling Simulation ---\n");
 
-            // Loop through each frame.
-            for (int frameIndex = 0; frameIndex < match.Scorecard.Frames.Count; frameIndex++)
+            int frameCount = match.Scorecard.Frames.Count;
+            for (int frameIndex = 0; frameIndex < frameCount; frameIndex++)
             {
-                // Check if this is the last frame (special double round).
-                bool isLastFrame = (frameIndex == match.Scorecard.Frames.Count - 1);
+                bool isLastFrame = (frameIndex == frameCount - 1);
                 Console.WriteLine($"Frame {frameIndex + 1}{(isLastFrame ? " (Double Points)" : "")}:");
 
-                // Process each player.
                 foreach (var player in match.Players)
                 {
-                    // Generate a random score between 1 and 10 (inclusive).
                     int score = rand.Next(1, 11);
                     if (isLastFrame)
-                    {
-                        score *= 2; // Double the score for the last frame.
-                    }
-
-                    // Update the player's current score.
+                        score *= 2;
                     player.CurrentScore += score;
-
-                    // (Optional) You could also add the score to the player's individual frame record if you had one.
                     Console.WriteLine($"- {player.MemberInfo.Name} scored {score} points.");
                 }
 
-                // Display cumulative scores after the frame.
                 Console.WriteLine("\nCumulative scores after frame {0}:", frameIndex + 1);
                 foreach (var player in match.Players)
                 {
                     Console.WriteLine($"- {player.MemberInfo.Name}: {player.CurrentScore}");
                 }
-                Console.WriteLine(); // Blank line for readability.
-
-                // Pause for half a second before the next frame.
-                System.Threading.Thread.Sleep(1000);
+                Console.WriteLine();
+                Thread.Sleep(1000);
             }
 
-            // Clear any previous results in the scorecard.
+            // Update the Scorecard with final results.
             match.Scorecard.Results.Clear();
-
-            // Populate the scorecard with final results for each player.
             foreach (var player in match.Players)
             {
                 var result = new PlayerResult
                 {
-                    PlayerId = player.PlayerID,        
-                    PlayerName = player.MemberInfo.Name,  
-                    FinalScore = player.CurrentScore     
+                    PlayerId = player.PlayerID,
+                    PlayerName = player.MemberInfo.Name,
+                    FinalScore = player.CurrentScore
                 };
                 match.Scorecard.Results.Add(result);
             }
 
-            // Determine the winner (player with the highest current score).
-            var winner = match.Players.OrderByDescending(p => p.CurrentScore).First();
-            Console.WriteLine($"The winner is {winner.MemberInfo.Name} with {winner.CurrentScore} points!");
+            var winner = match.Scorecard.Results.OrderByDescending(r => r.FinalScore).First();
+            Console.WriteLine($"The winner is {winner.PlayerName} with {winner.FinalScore} points!");
+            var winningPlayer = match.Players.FirstOrDefault(p => p.PlayerID == winner.PlayerId);
+            if (winningPlayer != null)
+            {
+                winningPlayer.MemberInfo.GamesWon++;
+            }
 
-            // Update the winner's GamesWon field.
-            winner.MemberInfo.GamesWon++;
+            foreach (var player in match.Players)
+            {
+                player.CurrentScore = 0;
+            }
 
-            // Ask if they want to play again.
             Console.Write("\nWould you like to play again? (Y/N): ");
             string playAgain = Console.ReadLine();
             if (playAgain.Equals("Y", StringComparison.OrdinalIgnoreCase) ||
                 playAgain.Equals("Yes", StringComparison.OrdinalIgnoreCase))
             {
-                // Optionally, clear or reset the current game state if needed, then restart.
-                // Here, we'll call StartGame() again.
                 StartGame();
             }
             else
             {
                 Console.WriteLine("Thanks for playing!");
             }
+        }
+
+        // Simple email validation: checks that email is non-empty, contains an '@', and a '.' after '@'.
+        private bool IsValidEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return false;
+            int atIndex = email.IndexOf('@');
+            int dotIndex = email.LastIndexOf('.');
+            return atIndex > 0 && dotIndex > atIndex;
+        }
+        public void CheckStats()
+        {
+            Console.WriteLine("Please log in to check your game stats.");
+            Player player = LoginPlayer();
+            if (player == null)
+            {
+                Console.WriteLine("Login failed. Please try again.");
+                return;
+            }
+
+            if (!(player.MemberInfo is RegisteredMember))
+            {
+                Console.WriteLine("Only registered members have stats. Please register to see stats.");
+            }
+            else
+            {
+                Console.WriteLine($"Welcome, {player.MemberInfo.Name}!");
+                Console.WriteLine($"Games Won: {player.MemberInfo.GamesWon}");
+                // Here you can extend the stats logic as needed.
+            }
+
+            Console.WriteLine("Press any key to continue...");
+            Console.ReadKey();
+        }
+
+
+        // Prompts the user to log in. Returns the Player if login is successful.
+        private Player LoginPlayer()
+        {
+            Console.Write("Enter your username: ");
+            string username = Console.ReadLine();
+            Console.Write("Enter your password: ");
+            string password = Console.ReadLine();
+
+            // Use the login method from PlayerService.
+            Player player = _playerService.Login(username, password);
+            if (player == null)
+            {
+                Console.WriteLine("Login failed. Please check your credentials and try again.");
+            }
+            return player;
+        }
+
+        // Creates a guest player.
+        private Player CreateGuestPlayer()
+        {
+            Console.Write("Enter your guest name: ");
+            string guestName = Console.ReadLine();
+            IMember guestMember = MemberFactory.CreateMember("guest", guestName, null);
+            Player guest = new Player { MemberInfo = guestMember, CurrentScore = 0 };
+            _playerService.RegisterPlayer(guest);
+            return guest;
         }
     }
 

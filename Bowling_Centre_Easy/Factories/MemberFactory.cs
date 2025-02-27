@@ -2,6 +2,7 @@
 using Bowling_Centre_Easy.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ namespace Bowling_Centre_Easy.Factories
 {
     public static class MemberFactory
     {
-        public static IMember CreateMember(string memberType, string name, string email = null)
+        public static IMember CreateMember(string memberType, string name, string password, string email = null)
         {
             switch (memberType.ToLower())
             {
@@ -21,6 +22,7 @@ namespace Bowling_Centre_Easy.Factories
                     return new RegisteredMember
                     {
                         Name = name,
+                        Password = password,
                         Email = email,
                         GamesWon = 0
                     };
