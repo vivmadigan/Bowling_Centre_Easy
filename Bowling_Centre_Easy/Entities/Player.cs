@@ -12,7 +12,6 @@ namespace Bowling_Centre_Easy.Entities
         public Guid PlayerID { get; set; }
         public IMember MemberInfo { get; set; }
         public int CurrentScore { get; set; }
-
         public Player()
         {
             PlayerID = Guid.NewGuid();
