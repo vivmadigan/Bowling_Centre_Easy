@@ -1,4 +1,6 @@
 ﻿using Bowling_Centre_Easy.Entities;
+using Bowling_Centre_Easy.Factories;
+using Bowling_Centre_Easy.Interfaces;
 using Bowling_Centre_Easy.Repos;
 using System;
 using System.Collections.Generic;
@@ -16,44 +18,160 @@ namespace Bowling_Centre_Easy.Services
         {
             _playerRepo = playerRepo;
         }
+        public void RegisterMember()
+        {
+            Console.WriteLine("Registering new users...");
+            List<Player> newPlayers = RegisterNewMembers();
+            // Optionally, display a summary of the new users.
+        }
+        // Method to register a new member (and return the created players).
+        private List<Player> RegisterNewMembers()
+        {
+            var players = new List<Player>();
+            bool addMore = true;
+
+            while (addMore)
+            {
+                Console.WriteLine("Please enter your username:");
+                string userName = Console.ReadLine();
+                while (string.IsNullOrWhiteSpace(userName))
+                {
+                    Console.WriteLine("Username cannot be empty. Please enter your username:");
+                    userName = Console.ReadLine();
+                }
+
+                Console.WriteLine("Please enter your password (must be at least 6 characters):");
+                string userPassword = Console.ReadLine();
+                while (userPassword.Length < 6)
+                {
+                    Console.WriteLine("Password is too short, please try again:");
+                    userPassword = Console.ReadLine();
+                }
+
+                Console.WriteLine("Please enter your email:");
+                string userEmail = Console.ReadLine();
+                while (!IsValidEmail(userEmail))
+                {
+                    Console.WriteLine("Invalid email format, please enter a valid email:");
+                    userEmail = Console.ReadLine();
+                }
+
+                // Use the factory to create a registered member.
+                IMember newMember = MemberFactory.CreateMember("register", userName, userPassword, userEmail);
+                Player newPlayer = new Player
+                {
+                    MemberInfo = newMember,
+                    CurrentScore = 0
+                };
+
+                RegisterMember(newPlayer);
+                players.Add(newPlayer);
+
+                Console.WriteLine("Would you like to register another new user? (Y/N):");
+                string choice = Console.ReadLine();
+                addMore = choice.Equals("Y", StringComparison.OrdinalIgnoreCase) ||
+                          choice.Equals("Yes", StringComparison.OrdinalIgnoreCase);
+            }
+
+            return players;
+        }
+
+        public Player Login(string username, string password)
+        {
+            Player player = _playerRepo.GetPlayerByUsername(username);
+            if (player != null && player.MemberInfo is RegisteredMember regMember)
+            {
+                if (regMember.Password == password)
+                    return player;
+            }
+            return null;
+        }
+
+        public Player LoginMember()
+        {
+            Console.Write("Enter your username: ");
+            string username = Console.ReadLine();
+            Console.Write("Enter your password: ");
+            string password = Console.ReadLine();
+
+            // Call the internal Login method (using 'this' is optional).
+            Player player = this.Login(username, password);
+            if (player == null)
+            {
+                Console.WriteLine("Login failed. Please check your credentials and try again.");
+            }
+            return player;
+        }
+        private bool IsValidEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return false;
+            int atIndex = email.IndexOf('@');
+            int dotIndex = email.LastIndexOf('.');
+            return atIndex > 0 && dotIndex > atIndex;
+        }
+
+        public bool PromptAndUpdateMember(RegisteredMember regMember)
+        {
+            Console.Write("Enter your email: ");
+            string newEmail = Console.ReadLine();
+
+            Console.Write("Enter new password (must be at least 6 characters): ");
+            string newPassword = Console.ReadLine();
+
+            if (newPassword.Length < 6)
+            {
+                Console.WriteLine("Password too short. Update aborted.");
+                return false;
+            }
+
+            // Attempt to update the member's details.
+            bool success = UpdateMember(regMember.MemberID, newEmail, newPassword);
+            if (success)
+                Console.WriteLine("Member details updated successfully.");
+            else
+                Console.WriteLine("Member update failed. Please check your inputs.");
+
+            return success;
+        }
 
         // CREATE: Registers a new member (player).
         public void RegisterMember(Player player)
         {
-            // You can add any additional validation here if needed.
             _playerRepo.AddPlayer(player);
         }
 
-        // READ: Retrieves a member (player) by username.
-        public Player GetMemberByUsername(string username)
-        {
-            return _playerRepo.GetPlayerByUsername(username);
-        }
-
+       
         // UPDATE: Updates a member's information.
-        public bool UpdateMember(Player updatedPlayer)
+        // Updates a registered member's email and password using their unique MemberID.
+        public bool UpdateMember(Guid memberId, string newEmail, string newPassword)
         {
-            // Retrieve the existing player by username.
-            Player existingPlayer = _playerRepo.GetPlayerByUsername(updatedPlayer.MemberInfo.Name);
-            if (existingPlayer != null)
+            Player player = _playerRepo.GetAll().FirstOrDefault(p =>
+                p.MemberInfo is RegisteredMember reg && reg.MemberID == memberId);
+            if (player != null && player.MemberInfo is RegisteredMember regMember)
             {
-                // For RegisteredMember, update email, password, etc.
-                if (existingPlayer.MemberInfo is RegisteredMember existingReg &&
-                    updatedPlayer.MemberInfo is RegisteredMember updatedReg)
+                if (!IsValidEmail(newEmail))
                 {
-                    existingReg.Email = updatedReg.Email;
-                    existingReg.Password = updatedReg.Password;
-                    // Additional properties can be updated here.
-                    return true;
+                    Console.WriteLine("Invalid email format.");
+                    return false;
                 }
+                if (newPassword.Length < 6)
+                {
+                    Console.WriteLine("Password must be at least 6 characters.");
+                    return false;
+                }
+                regMember.Email = newEmail;
+                regMember.Password = newPassword;
+                return true;
             }
             return false;
         }
 
-        // DELETE: Deletes a member by username.
-        public bool DeleteMember(string username)
+        // DELETE: Deletes a member using their unique MemberID.
+        public bool DeleteMember(Guid memberId)
         {
-            Player player = _playerRepo.GetPlayerByUsername(username);
+            // Find the player whose MemberInfo is a RegisteredMember with the given MemberID.
+            Player player = _playerRepo.GetAll().FirstOrDefault(p =>
+                p.MemberInfo is RegisteredMember reg && reg.MemberID == memberId);
             if (player != null)
             {
                 return _playerRepo.RemovePlayer(player);
@@ -61,10 +179,18 @@ namespace Bowling_Centre_Easy.Services
             return false;
         }
 
-        // Clears all players (if needed for resetting state).
-        public void ClearMembers()
+        // Displays stats for a registered member.
+        public void CheckStats(Player player)
         {
-            _playerRepo.Clear();
+            if (player.MemberInfo is RegisteredMember reg)
+            {
+                Console.WriteLine($"Welcome, {reg.Name}!");
+                Console.WriteLine($"Games Won: {reg.GamesWon}");
+            }
+            else
+            {
+                Console.WriteLine("Only registered members have stats. Please register to see stats.");
+            }
         }
     }
 }

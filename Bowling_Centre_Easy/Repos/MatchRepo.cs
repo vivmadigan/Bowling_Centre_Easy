@@ -22,10 +22,5 @@ namespace Bowling_Centre_Easy.Repos
             return _matches.FirstOrDefault(m => m.MatchID == matchId);
         }
 
-        public void Clear()
-        {
-            _matches.Clear();
-        }
-
     }
 }

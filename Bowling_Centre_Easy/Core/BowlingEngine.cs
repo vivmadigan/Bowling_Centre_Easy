@@ -24,65 +24,6 @@ namespace Bowling_Centre_Easy.Core
             _matchService = matchService;
         }
 
-        // Public method for registering new users. This encapsulates the lower-level details.
-        public void RegisterUsers()
-        {
-            Console.WriteLine("Registering new users...");
-            List<Player> newPlayers = RegisterNewUsers();
-            // Optionally, display a summary of the new users.
-        }
-
-        // Private helper method that collects registration info and returns a list of newly registered players.
-        private List<Player> RegisterNewUsers()
-        {
-            var players = new List<Player>();
-            bool addMore = true;
-
-            while (addMore)
-            {
-                Console.WriteLine("Please enter your username:");
-                string userName = Console.ReadLine();
-                while (string.IsNullOrWhiteSpace(userName))
-                {
-                    Console.WriteLine("Username cannot be empty. Please enter your username:");
-                    userName = Console.ReadLine();
-                }
-
-                Console.WriteLine("Please enter your password (must be at least 6 characters):");
-                string userPassword = Console.ReadLine();
-                while (userPassword.Length < 6)
-                {
-                    Console.WriteLine("Password is too short, please try again:");
-                    userPassword = Console.ReadLine();
-                }
-
-                Console.WriteLine("Please enter your email:");
-                string userEmail = Console.ReadLine();
-                while (!IsValidEmail(userEmail))
-                {
-                    Console.WriteLine("Invalid email format, please enter a valid email:");
-                    userEmail = Console.ReadLine();
-                }
-
-                // Use the factory to create a registered member.
-                IMember newMember = MemberFactory.CreateMember("register", userName, userPassword, userEmail);
-                Player newPlayer = new Player
-                {
-                    MemberInfo = newMember,
-                    CurrentScore = 0
-                };
-
-                _playerService.RegisterPlayer(newPlayer);
-                players.Add(newPlayer);
-
-                Console.WriteLine("Would you like to register another new user? (Y/N):");
-                string choice = Console.ReadLine();
-                addMore = choice.Equals("Y", StringComparison.OrdinalIgnoreCase) ||
-                          choice.Equals("Yes", StringComparison.OrdinalIgnoreCase);
-            }
-
-            return players;
-        }
 
         // Starts the game by gathering players, frame count, and lane selection, then simulating a match.
         public void StartGame()
@@ -294,39 +235,6 @@ namespace Bowling_Centre_Easy.Core
             {
                 Console.WriteLine("Thanks for playing!");
             }
-        }
-
-        // Simple email validation: checks that email is non-empty, contains an '@', and a '.' after '@'.
-        private bool IsValidEmail(string email)
-        {
-            if (string.IsNullOrWhiteSpace(email)) return false;
-            int atIndex = email.IndexOf('@');
-            int dotIndex = email.LastIndexOf('.');
-            return atIndex > 0 && dotIndex > atIndex;
-        }
-        public void CheckStats()
-        {
-            Console.WriteLine("Please log in to check your game stats.");
-            Player player = LoginPlayer();
-            if (player == null)
-            {
-                Console.WriteLine("Login failed. Please try again.");
-                return;
-            }
-
-            if (!(player.MemberInfo is RegisteredMember))
-            {
-                Console.WriteLine("Only registered members have stats. Please register to see stats.");
-            }
-            else
-            {
-                Console.WriteLine($"Welcome, {player.MemberInfo.Name}!");
-                Console.WriteLine($"Games Won: {player.MemberInfo.GamesWon}");
-                // Here you can extend the stats logic as needed.
-            }
-
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey();
         }
 
 
