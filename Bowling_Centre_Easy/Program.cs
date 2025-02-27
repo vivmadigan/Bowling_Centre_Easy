@@ -17,8 +17,9 @@ namespace Bowling_Centre_Easy
 
             PlayerService playerService = new PlayerService(playerRepo);
             MatchService matchService = new MatchService(matchRepo, laneRepo);
+            MemberService memberService = new MemberService(playerRepo);
 
-            // Create the BowlingEngine (which contains registration, game logic, etc.).
+            // Create the BowlingEngine (which contains game logic).
             BowlingEngine engine = new BowlingEngine(playerService, laneRepo, matchService);
 
             // Create a mapping from menu option to ICommand.
@@ -27,7 +28,7 @@ namespace Bowling_Centre_Easy
                 { 1, new RegisterUserCommand(engine) },
                 { 2, new StartGameCommand(engine) },
                 { 3, new CheckStatsCommand(engine) },
-                { 4, new DeleteMembershipCommand() }
+                { 4, new DeleteMembershipCommand(memberService) }
                 // Option 5 is for Exit, handled separately.
             };
 

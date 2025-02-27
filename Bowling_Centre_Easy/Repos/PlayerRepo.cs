@@ -24,6 +24,15 @@ namespace Bowling_Centre_Easy.Repos
             return _players.FirstOrDefault(p => p.MemberInfo.Name.Equals(username, StringComparison.OrdinalIgnoreCase));
         }
 
+        public IEnumerable<Player> GetAll()
+        {
+            return _players;
+        }
+
+        public bool RemovePlayer(Player player)
+        {
+            return _players.Remove(player);
+        }
 
         public void Clear()
         {
