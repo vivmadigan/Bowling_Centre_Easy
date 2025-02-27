@@ -5,22 +5,24 @@ using System.Text;
 using System.Threading.Tasks;
 using Bowling_Centre_Easy.Core;
 using Bowling_Centre_Easy.Interfaces;
+using Bowling_Centre_Easy.Services;
 
 namespace Bowling_Centre_Easy.Command_Entities
 {
     public class RegisterUserCommand : ICommand
     {
-        private readonly BowlingEngine _engine;
+        private readonly MemberService _memberService;
 
-        public RegisterUserCommand(BowlingEngine engine)
+        public RegisterUserCommand(MemberService memberService)
         {
-            _engine = engine;
+            _memberService = memberService;
         }
 
         public void Execute()
         {
-            // Calls the registration method on the engine.
-            _engine.RegisterUsers();
+            // OLD
+             _memberService.RegisterMember();
+
         }
     }
 }

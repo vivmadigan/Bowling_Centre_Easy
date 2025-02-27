@@ -25,11 +25,11 @@ namespace Bowling_Centre_Easy
             // Create a mapping from menu option to ICommand.
             Dictionary<int, ICommand> menuCommands = new Dictionary<int, ICommand>
             {
-                { 1, new RegisterUserCommand(engine) },
+                { 1, new RegisterUserCommand(memberService) },
                 { 2, new StartGameCommand(engine) },
-                { 3, new CheckStatsCommand(engine) },
-                { 4, new DeleteMembershipCommand(memberService) }
-                // Option 5 is for Exit, handled separately.
+                { 3, new CheckStatsCommand(memberService) },
+                { 4, new DeleteMembershipCommand(memberService) },
+                { 5, new UpdateMemberCommand(memberService) }
             };
 
             bool exitProgram = false;
@@ -43,7 +43,8 @@ namespace Bowling_Centre_Easy
                 Console.WriteLine("2 - Start playing!");
                 Console.WriteLine("3 - Check your game stats");
                 Console.WriteLine("4 - Delete your membership");
-                Console.WriteLine("5 - Exit this program\n");
+                Console.WriteLine("5 - Update your member details");
+                Console.WriteLine("6 - Exit this program\n");
 
                 int userResponse = 0;
                 bool validInput = false;
@@ -60,7 +61,7 @@ namespace Bowling_Centre_Easy
                     }
                 }
 
-                if (userResponse == 5)
+                if (userResponse == 6)
                 {
                     Console.WriteLine("Exiting program. Goodbye!");
                     exitProgram = true;
