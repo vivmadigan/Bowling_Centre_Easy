@@ -32,19 +32,26 @@ namespace Bowling_Centre_Easy
                 { 5, new UpdateMemberCommand(memberService) }
             };
 
+            List<string> menuOptions = new List<string>
+            {
+                "Welcome to Nackademin Bowling Center\n",
+                "You can play either as a guest or a member\n",
+                "Please enter a number to choose an option you would like:",
+                "1 – Register to become a member",
+                "2 – Start playing",
+                "3 – Check your game stats",
+                "4 – Delete your membership",
+                "5 – Update your member details",
+                "6 – Exit this program\n"
+            };
+
             bool exitProgram = false;
             while (!exitProgram)
             {
-                // Display the menu.
-                Console.WriteLine("Welcome to Nackademin Bowling Center\n");
-                Console.WriteLine("You can play either as a guest or a member\n");
-                Console.WriteLine("Please enter a number to choose an option you would like:");
-                Console.WriteLine("1 - Register to become a member");
-                Console.WriteLine("2 - Start playing!");
-                Console.WriteLine("3 - Check your game stats");
-                Console.WriteLine("4 - Delete your membership");
-                Console.WriteLine("5 - Update your member details");
-                Console.WriteLine("6 - Exit this program\n");
+                foreach (var line in menuOptions)
+                {
+                    Console.WriteLine(line);
+                }
 
                 int userResponse = 0;
                 bool validInput = false;
