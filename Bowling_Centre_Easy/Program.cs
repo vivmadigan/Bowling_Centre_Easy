@@ -3,6 +3,7 @@ using Bowling_Centre_Easy.Core;
 using Bowling_Centre_Easy.Interfaces;
 using Bowling_Centre_Easy.Repos;
 using Bowling_Centre_Easy.Services;
+using Bowling_Centre_Easy.MenuOptions;
 
 namespace Bowling_Centre_Easy
 {
@@ -12,82 +13,105 @@ namespace Bowling_Centre_Easy
         {
             // Setup repositories and services.
             PlayerRepo playerRepo = new PlayerRepo();
-            LaneRepo laneRepo = new LaneRepo();
+            LaneRepo laneRepo = new LaneRepo(); // Get rid of this. 
             MatchRepo matchRepo = new MatchRepo();
 
             PlayerService playerService = new PlayerService(playerRepo);
-            MatchService matchService = new MatchService(matchRepo, laneRepo);
+            MatchService matchService = new MatchService(matchRepo);
             MemberService memberService = new MemberService(playerRepo);
 
-            // Create the BowlingEngine (which contains game logic).
+            // The BowlingEngine orchestrates the main game flow
             BowlingEngine engine = new BowlingEngine(playerService, laneRepo, matchService);
 
-            // Create a mapping from menu option to ICommand.
-            Dictionary<int, ICommand> menuCommands = new Dictionary<int, ICommand>
+            // A list of meny options, each linking an ID, a description, and a command to execute.
+            List<MainMenu> menuOptions = new List<MainMenu>
             {
-                { 1, new RegisterUserCommand(memberService) },
-                { 2, new StartGameCommand(engine) },
-                { 3, new CheckStatsCommand(memberService) },
-                { 4, new DeleteMembershipCommand(memberService) },
-                { 5, new UpdateMemberCommand(memberService) }
+                new MainMenu
+                {
+                    Id = 1, Description = "Register to become a member",
+                    Command = new RegisterUserCommand(memberService)
+                },
+                new MainMenu 
+                { 
+                    Id = 2, Description = "Start playing",
+                    Command = new StartGameCommand(engine)
+                },
+                new MainMenu
+                {
+                    Id = 3, Description = "Check your game stats", 
+                    Command = new CheckStatsCommand(memberService)
+                },
+                new MainMenu
+                {
+                    Id = 4, Description = "Delete your membership", 
+                    Command = new DeleteMembershipCommand(memberService)
+                },
+                new MainMenu
+                {
+                    Id = 5, Description = "Update your member details", 
+                    Command = new UpdateMemberCommand(memberService)
+                },
             };
+            // Intro lines to display before showing the menu.
 
-            List<string> menuOptions = new List<string>
+            List<string> menuWelcome = new List<string>
             {
                 "Welcome to Nackademin Bowling Center\n",
                 "You can play either as a guest or a member\n",
                 "Please enter a number to choose an option you would like:",
-                "1 – Register to become a member",
-                "2 – Start playing",
-                "3 – Check your game stats",
-                "4 – Delete your membership",
-                "5 – Update your member details",
-                "6 – Exit this program\n"
             };
-
+            // Main loop: Display the menu, read input, execute commands, or exit
             bool exitProgram = false;
             while (!exitProgram)
             {
-                foreach (var line in menuOptions)
+                foreach (var line in menuWelcome)
                 {
                     Console.WriteLine(line);
+
                 }
 
-                int userResponse = 0;
-                bool validInput = false;
-                while (!validInput)
+                foreach (var option in menuOptions)
                 {
-                    try
-                    {
-                        userResponse = int.Parse(Console.ReadLine());
-                        validInput = true;
-                    }
-                    catch (FormatException)
-                    {
-                        Console.WriteLine("Invalid number, please try again.");
-                    }
+                    Console.WriteLine($"{option.Id} - {option.Description}");
                 }
 
-                if (userResponse == 6)
+                Console.WriteLine($"{menuOptions.Count + 1} - Exit this program");
+
+
+                // Read user input and check if it's a valid integer.
+                // If invalid, keep prompting until the user enters a valid integer.
+                int userResponse;
+                while (!int.TryParse(Console.ReadLine(), out userResponse))
+                {
+                    Console.WriteLine("Invalid number, please try again.");
+                }
+
+                if (userResponse == menuOptions.Count + 1)
                 {
                     Console.WriteLine("Exiting program. Goodbye!");
                     exitProgram = true;
                 }
-                else if (menuCommands.ContainsKey(userResponse))
-                {
-                    menuCommands[userResponse].Execute();
-                }
+
                 else
                 {
-                    Console.WriteLine("Invalid option selected. Please try again.");
+                    var selectedOption = menuOptions
+                        .FirstOrDefault(x => x.Id == userResponse);
+
+                    if (selectedOption == null)
+                    {
+                        Console.WriteLine("Invalid option selected. Please try again.");
+                    }
+                    else
+                    {
+                        // Safely execute the command only if it's not null
+                        // The ?. operator calls Execute() only when Command != null
+                        selectedOption.Command?.Execute();
+                    }
                 }
 
                 System.Threading.Thread.Sleep(1000);
                 Console.Clear();
             }
-
-            Console.WriteLine("Press any key to exit...");
-            Console.ReadKey();
         }
     }
 }

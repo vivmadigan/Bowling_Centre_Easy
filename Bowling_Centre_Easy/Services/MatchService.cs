@@ -13,13 +13,11 @@ namespace Bowling_Centre_Easy.Services
     {
         // The repository for storing matches.
         private readonly MatchRepo _matchRepo;
-        private readonly LaneRepo _laneRepo;
 
         // Constructor: We inject the MatchRepo so this service can store and retrieve matches.
-        public MatchService(MatchRepo matchRepo, LaneRepo laneRepo)
+        public MatchService(MatchRepo matchRepo)
         {
             _matchRepo = matchRepo;
-            _laneRepo = laneRepo;
         }
 
         // Creates a new match with the given list of players.
@@ -43,12 +41,6 @@ namespace Bowling_Centre_Easy.Services
 
             // Return the created match so it can be used by the calling code.
             return match;
-        }
-
-        // Retrieves a match by its unique ID.
-        public Match GetMatchById(Guid matchId)
-        {
-            return _matchRepo.GetById(matchId);
         }
 
     }
