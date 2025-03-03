@@ -1,6 +1,7 @@
 ﻿using Bowling_Centre_Easy.Entities;
 using Bowling_Centre_Easy.Factories;
 using Bowling_Centre_Easy.Interfaces;
+using Bowling_Centre_Easy.Logger;
 using Bowling_Centre_Easy.Repos;
 using Bowling_Centre_Easy.Services;
 using System;
@@ -39,6 +40,8 @@ namespace Bowling_Centre_Easy.Core
         /// </summary>
         public void StartGame()
         {
+            SingletonLogger.Instance.LogInformation("Starting a new game...");
+
             bool confirmed = false;
             List<Player> players = null;
             int frameCount = 0;
@@ -50,6 +53,8 @@ namespace Bowling_Centre_Easy.Core
 
                 // Ask how many frames to play (1-10).
                 frameCount = GetFrameCountFromUser();
+
+                SingletonLogger.Instance.LogInformation($"Collected {players.Count} players with {frameCount} frames.");
 
                 // Show the user what they've chosen.
                 Console.WriteLine("\nYou have the following players:");
@@ -68,13 +73,22 @@ namespace Bowling_Centre_Easy.Core
                 }
                 else
                 {
+                    SingletonLogger.Instance.LogWarning("User requested re-entry of game setup details.");
                     Console.WriteLine("Resetting information. Please re-enter your details.\n");
                     ClearCurrentGameState();
                 }
             }
 
+            SingletonLogger.Instance.LogInformation("Prompting user to choose a lane...");
+
             // Let the user pick a lane to play on.
             BowlingLane chosenLane = GetLaneFromUser();
+            if (chosenLane == null)
+            {
+                // If for some reason you returned null
+                SingletonLogger.Instance.LogError("Failed to retrieve a valid lane from user. Aborting StartGame.");
+                return;
+            }
 
             // Create a new scorecard and pre-populate frames.
             Scorecard scorecard = new Scorecard();
@@ -82,6 +96,7 @@ namespace Bowling_Centre_Easy.Core
             {
                 scorecard.Frames.Add(new Frame { FrameNumber = i, Score = 0 });
             }
+            SingletonLogger.Instance.LogInformation($"Creating match with {players.Count} players on lane {chosenLane.LaneNumber}.");
 
             // Create and run the match.
             Match match = _matchService.CreateMatch(players, chosenLane, scorecard);
@@ -110,6 +125,8 @@ namespace Bowling_Centre_Easy.Core
             // Ask the user for the total number of players (1-6).
             int count = ReadIntInRange("How many players will be playing? (Max 6): ", 1, 6);
 
+            SingletonLogger.Instance.LogInformation($"User indicated {count} players will be playing.");
+
             for (int i = 0; i < count; i++)
             {
                 Console.WriteLine($"\nFor Player {i + 1}: Would you like to log in or play as a guest? (L/G): ");
@@ -125,6 +142,7 @@ namespace Bowling_Centre_Easy.Core
                     }
                     else
                     {
+                        SingletonLogger.Instance.LogWarning("Login failed for a player; re-prompting user.");
                         // If login fails, decrement i to retry this same "slot".
                         Console.WriteLine("Login failed. Please try again.");
                         i--;
@@ -135,6 +153,7 @@ namespace Bowling_Centre_Easy.Core
                     // If 'G', create a guest player
                     Player guest = CreateGuestPlayer();
                     players.Add(guest);
+                    SingletonLogger.Instance.LogInformation($"Guest player created: {guest.MemberInfo.Name}");
                 }
             }
 
@@ -165,11 +184,14 @@ namespace Bowling_Centre_Easy.Core
                 selectedLane = _laneRepo.GetLaneByNumber(laneNumber);
                 if (selectedLane == null)
                 {
+                    SingletonLogger.Instance.LogWarning($"User tried lane {laneNumber} but it doesn't exist in LaneRepo.");
                     Console.WriteLine("Lane not found. Try again.");
                     continue;
                 }
                 else if (selectedLane.InUse)
                 {
+                    SingletonLogger.Instance.LogWarning($"Lane {laneNumber} is in use; prompting user to pick another.");
+
                     Console.WriteLine("That lane is currently in use. Please select a different lane.");
                 }
                 else
@@ -180,6 +202,7 @@ namespace Bowling_Centre_Easy.Core
 
             // Mark the chosen lane as in use.
             _laneRepo.MarkLaneAsUsed(selectedLane.BowlingLaneID, true);
+            SingletonLogger.Instance.LogInformation($"User selected lane {selectedLane.LaneNumber}. Lane marked in use.");
             return selectedLane;
         }
 
@@ -188,6 +211,8 @@ namespace Bowling_Centre_Easy.Core
         /// </summary>
         private void RunMatch(Match match)
         {
+            SingletonLogger.Instance.LogInformation($"Match {match.MatchID} is starting with {match.Players.Count} players.");
+
             Console.WriteLine("\nStarting match...");
             Console.WriteLine($"Match ID: {match.MatchID}");
             Console.WriteLine("Players in the match:");
@@ -293,6 +318,7 @@ namespace Bowling_Centre_Easy.Core
             {
                 player.CurrentScore = 0;
             }
+            SingletonLogger.Instance.LogInformation($"Match {match.MatchID} ended successfully.");
 
             // Prompt if user wants to play again.
             Console.Write("\nWould you like to play again? (Y/N): ");
@@ -323,7 +349,12 @@ namespace Bowling_Centre_Easy.Core
             Player player = _playerService.Login(username, password);
             if (player == null)
             {
+                SingletonLogger.Instance.LogWarning($"Failed login attempt for user '{username}'");
                 Console.WriteLine("Login failed. Please check your credentials and try again.");
+            }
+            else
+            {
+                SingletonLogger.Instance.LogInformation($"User '{username}' logged in successfully.");
             }
             return player;
         }
@@ -361,6 +392,7 @@ namespace Bowling_Centre_Easy.Core
                 // Try parse the input to an integer.
                 if (!int.TryParse(input, out int value))
                 {
+                    SingletonLogger.Instance.LogWarning($"Invalid number input '{input}' when expecting an integer.");
                     Console.WriteLine("Invalid input. Please enter a valid number.\n");
                     continue;
                 }
@@ -368,6 +400,7 @@ namespace Bowling_Centre_Easy.Core
                 // Check if within the specified range.
                 if (value < min || value > max)
                 {
+                    SingletonLogger.Instance.LogWarning($"Integer {value} is out of range ({min}-{max}).");
                     Console.WriteLine($"Please enter a number between {min} and {max}.\n");
                     continue;
                 }
@@ -390,6 +423,8 @@ namespace Bowling_Centre_Easy.Core
                 if (input == "N" || input == "NO")
                     return false;
 
+                SingletonLogger.Instance.LogWarning($"Invalid yes/no input: '{input}'");
+
                 Console.WriteLine("Invalid choice. Please type Y or N.");
             }
         }
@@ -406,6 +441,7 @@ namespace Bowling_Centre_Easy.Core
                 if (input == "G" || input == "GUEST")
                     return "G";
 
+                SingletonLogger.Instance.LogWarning($"User typed invalid option for login/guest: '{input}'");
 
                 Console.WriteLine("Invalid choice. Please type 'L' (Log in) or 'G' (Guest).");
             }

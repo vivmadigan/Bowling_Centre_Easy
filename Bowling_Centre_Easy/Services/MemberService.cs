@@ -1,6 +1,7 @@
 ﻿using Bowling_Centre_Easy.Entities;
 using Bowling_Centre_Easy.Factories;
 using Bowling_Centre_Easy.Interfaces;
+using Bowling_Centre_Easy.Logger;
 using Bowling_Centre_Easy.Repos;
 using System;
 using System.Collections.Generic;
@@ -18,8 +19,9 @@ namespace Bowling_Centre_Easy.Services
         {
             _playerRepo = playerRepo;
         }
-        public void RegisterMember()
+        public void BeginMemberRegistration()
         {
+            SingletonLogger.Instance.LogInformation("User initiated 'RegisterMember' flow choice.");
             Console.WriteLine("Registering new users...");
             List<Player> newPlayers = RegisterNewMembers();
             // Optionally, display a summary of the new users.
@@ -55,7 +57,7 @@ namespace Bowling_Centre_Easy.Services
                     Console.WriteLine("Invalid email format, please enter a valid email:");
                     userEmail = Console.ReadLine();
                 }
-
+                SingletonLogger.Instance.LogInformation($"Registering new user with username: {userName}");
                 // Use the factory to create a registered member.
                 IMember newMember = MemberFactory.CreateMember("register", userName, userPassword, userEmail);
                 Player newPlayer = new Player
@@ -82,7 +84,18 @@ namespace Bowling_Centre_Easy.Services
             if (player != null && player.MemberInfo is RegisteredMember regMember)
             {
                 if (regMember.Password == password)
+                {
+                    SingletonLogger.Instance.LogInformation($"User '{username}' successfully logged in.");
                     return player;
+                }
+                else
+                {
+                    SingletonLogger.Instance.LogWarning($"Incorrect password for user '{username}'.");
+                }
+            }
+            else
+            {
+                SingletonLogger.Instance.LogWarning($"No registered member found for username '{username}'.");
             }
             return null;
         }
@@ -137,7 +150,14 @@ namespace Bowling_Centre_Easy.Services
         // CREATE: Registers a new member (player).
         public void RegisterMember(Player player)
         {
+            if (player == null)
+            {
+                SingletonLogger.Instance.LogError("Attempted to RegisterMember with a null Player object.");
+                return;
+            }
+
             _playerRepo.AddPlayer(player);
+            SingletonLogger.Instance.LogInformation($"Added new player: {player.MemberInfo.Name}");
         }
 
        

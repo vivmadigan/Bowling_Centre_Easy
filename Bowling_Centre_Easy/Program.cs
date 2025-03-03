@@ -4,6 +4,7 @@ using Bowling_Centre_Easy.Interfaces;
 using Bowling_Centre_Easy.Repos;
 using Bowling_Centre_Easy.Services;
 using Bowling_Centre_Easy.MenuOptions;
+using Bowling_Centre_Easy.Logger;
 
 namespace Bowling_Centre_Easy
 {
@@ -11,6 +12,9 @@ namespace Bowling_Centre_Easy
     {
         static void Main(string[] args)
         {
+            // Simple log at start up.
+            SingletonLogger.Instance.LogInformation("Application is starting...");
+
             // Setup repositories and services.
             PlayerRepo playerRepo = new PlayerRepo();
             LaneRepo laneRepo = new LaneRepo(); // Get rid of this. 
