@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Bowling_Centre_Easy.Core;
 using Bowling_Centre_Easy.Entities;
 using Bowling_Centre_Easy.Interfaces;
+using Bowling_Centre_Easy.Logger;
 using Bowling_Centre_Easy.Services;
 
 namespace Bowling_Centre_Easy.Command_Entities
@@ -21,6 +22,7 @@ namespace Bowling_Centre_Easy.Command_Entities
 
         public void Execute()
         {
+            SingletonLogger.Instance.LogInformation("User selected 'Check Game Stats' command.");
             Console.WriteLine("Please log in to check your game stats.");
             // LoginMember() is a method in MemberService that prompts for credentials.
             Player player = _memberService.LoginMember();

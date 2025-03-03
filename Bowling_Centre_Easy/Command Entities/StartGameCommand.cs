@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Bowling_Centre_Easy.Core;
 using Bowling_Centre_Easy.Interfaces;
+using Bowling_Centre_Easy.Logger;
 
 namespace Bowling_Centre_Easy.Command_Entities
 {
@@ -19,7 +20,7 @@ namespace Bowling_Centre_Easy.Command_Entities
 
         public void Execute()
         {
-            // Start playing; this might internally call StartGame() if that handles the game logic.
+            SingletonLogger.Instance.LogInformation("User selected 'Start Game' command.");
             _engine.StartGame();
         }
     }

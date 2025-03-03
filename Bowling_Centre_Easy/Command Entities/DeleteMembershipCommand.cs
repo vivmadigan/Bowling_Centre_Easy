@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Bowling_Centre_Easy.Entities;
 using Bowling_Centre_Easy.Interfaces;
+using Bowling_Centre_Easy.Logger;
 using Bowling_Centre_Easy.Services;
 
 namespace Bowling_Centre_Easy.Command_Entities
@@ -20,6 +21,7 @@ namespace Bowling_Centre_Easy.Command_Entities
 
         public void Execute()
         {
+            SingletonLogger.Instance.LogInformation("User selected 'Delete Membership' command.");
             Console.WriteLine("Please log in to delete your membership.");
             // Use the existing LoginMember method to authenticate the user.
             Player player = _memberService.LoginMember();
