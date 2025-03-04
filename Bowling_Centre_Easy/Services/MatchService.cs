@@ -6,16 +6,17 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using Bowling_Centre_Easy.Interfaces;
 
 namespace Bowling_Centre_Easy.Services
 {
     public class MatchService
     {
         // The repository for storing matches.
-        private readonly MatchRepo _matchRepo;
+        private readonly IMatchRepository _matchRepo;
 
         // Constructor: We inject the MatchRepo so this service can store and retrieve matches.
-        public MatchService(MatchRepo matchRepo)
+        public MatchService(IMatchRepository matchRepo)
         {
             _matchRepo = matchRepo;
         }

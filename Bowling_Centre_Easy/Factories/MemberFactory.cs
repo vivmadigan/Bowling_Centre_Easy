@@ -6,12 +6,13 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Bowling_Centre_Easy.Abstract;
 
 namespace Bowling_Centre_Easy.Factories
 {
     public static class MemberFactory
     {
-        public static IMember CreateMember(string memberType, string name, string password, string email = null)
+        public static BaseMember CreateMember(string memberType, string name, string password, string email = null)
         {
             switch (memberType.ToLower())
             {

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Bowling_Centre_Easy.Interfaces;
 
 namespace Bowling_Centre_Easy.Services
 {
@@ -12,9 +13,9 @@ namespace Bowling_Centre_Easy.Services
     // It ensures that your application follows the separation of concerns principle.
     public class PlayerService
     {
-        private readonly PlayerRepo _playerRepo;
+        private readonly IPlayerRepository _playerRepo;
 
-        public PlayerService(PlayerRepo playerRepo)
+        public PlayerService(IPlayerRepository playerRepo)
         {
             _playerRepo = playerRepo;
         }

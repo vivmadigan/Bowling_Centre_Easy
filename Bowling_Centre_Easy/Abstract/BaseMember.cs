@@ -4,15 +4,15 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Bowling_Centre_Easy.Abstract;
-using Bowling_Centre_Easy.Interfaces;
 
-namespace Bowling_Centre_Easy.Entities
+namespace Bowling_Centre_Easy.Abstract
 {
-    public class GuestMember : BaseMember
+    public abstract class BaseMember
     {
-        /*[Key]
+        [Key]
+        public int MemberID { get; set; }        
+
         public string Name { get; set; }
-        public int GamesWon { get; set; }*/
+        public int GamesWon { get; set; }
     }
 }
