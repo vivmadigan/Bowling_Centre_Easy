@@ -8,14 +8,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Bowling_Centre_Easy.Abstract;
 
 namespace Bowling_Centre_Easy.Services
 {
     public class MemberService
     {
-        private readonly PlayerRepo _playerRepo;
+        private readonly IPlayerRepository _playerRepo;
 
-        public MemberService(PlayerRepo playerRepo)
+        public MemberService(IPlayerRepository playerRepo)
         {
             _playerRepo = playerRepo;
         }
@@ -59,7 +60,7 @@ namespace Bowling_Centre_Easy.Services
                 }
                 SingletonLogger.Instance.LogInformation($"Registering new user with username: {userName}");
                 // Use the factory to create a registered member.
-                IMember newMember = MemberFactory.CreateMember("register", userName, userPassword, userEmail);
+                BaseMember newMember = MemberFactory.CreateMember("register", userName, userPassword, userEmail);
                 Player newPlayer = new Player
                 {
                     MemberInfo = newMember,
@@ -160,10 +161,11 @@ namespace Bowling_Centre_Easy.Services
             SingletonLogger.Instance.LogInformation($"Added new player: {player.MemberInfo.Name}");
         }
 
-       
+
         // UPDATE: Updates a member's information.
         // Updates a registered member's email and password using their unique MemberID.
-        public bool UpdateMember(Guid memberId, string newEmail, string newPassword)
+        // OLD METHOD
+        /*public bool UpdateMember(int memberId, string newEmail, string newPassword)
         {
             Player player = _playerRepo.GetAll().FirstOrDefault(p =>
                 p.MemberInfo is RegisteredMember reg && reg.MemberID == memberId);
@@ -184,10 +186,41 @@ namespace Bowling_Centre_Easy.Services
                 return true;
             }
             return false;
+        }*/
+        public bool UpdateMember(int memberId, string newEmail, string newPassword)
+        {
+            // We'll do a direct "GetAll()" or a new method "GetPlayerById()"—up to you.
+            // We'll assume you have GetAll() or GetPlayerById in the EF repo:
+            Player player = _playerRepo.GetAll()
+                .FirstOrDefault(p => p.MemberInfo is RegisteredMember reg && reg.MemberID == memberId);
+
+            if (player != null && player.MemberInfo is RegisteredMember regMember)
+            {
+                if (!IsValidEmail(newEmail))
+                {
+                    Console.WriteLine("Invalid email format.");
+                    return false;
+                }
+                if (newPassword.Length < 6)
+                {
+                    Console.WriteLine("Password must be at least 6 characters.");
+                    return false;
+                }
+                // Actually change the data
+                regMember.Email = newEmail;
+                regMember.Password = newPassword;
+
+                // Now persist it in the DB
+                _playerRepo.UpdatePlayer(player);
+
+                return true;
+            }
+            return false;
         }
 
+
         // DELETE: Deletes a member using their unique MemberID.
-        public bool DeleteMember(Guid memberId)
+        public bool DeleteMember(int memberId)
         {
             // Find the player whose MemberInfo is a RegisteredMember with the given MemberID.
             Player player = _playerRepo.GetAll().FirstOrDefault(p =>

@@ -5,6 +5,11 @@ using Bowling_Centre_Easy.Repos;
 using Bowling_Centre_Easy.Services;
 using Bowling_Centre_Easy.MenuOptions;
 using Bowling_Centre_Easy.Logger;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Bowling_Centre_Easy.EF;
+
 
 namespace Bowling_Centre_Easy
 {
@@ -12,22 +17,45 @@ namespace Bowling_Centre_Easy
     {
         static void Main(string[] args)
         {
+
+            //EF implementation
+            // Service Collection creates a container where you register all the dependencies your application will use.
+
+            var services = new ServiceCollection();
+
+            // Configure DbContext with connection string from app.config.
+            services.AddDbContext<BowlingContext>(options =>
+            {
+                var connString = System.Configuration.ConfigurationManager.ConnectionStrings["BowlingDb"].ConnectionString;
+                options.UseSqlServer(connString);
+            });
+
+            // Register EF-based repositories.
+            services.AddScoped<IPlayerRepository, EFPlayerRepository>();
+            services.AddScoped<IMatchRepository, EFMatchRepository>();
+            services.AddScoped<ILaneRepository, EFLaneRepository>();
+
+            // Register service classes.
+            services.AddScoped<PlayerService>();
+            services.AddScoped<MatchService>();
+            services.AddScoped<MemberService>();
+
+            // Build service provider.
+            var provider = services.BuildServiceProvider();
+
+            // Retrieve services.
+            var memberService = provider.GetRequiredService<MemberService>();
+            var playerService = provider.GetRequiredService<PlayerService>();
+            var matchService = provider.GetRequiredService<MatchService>();
+            var laneRepository = provider.GetRequiredService<ILaneRepository>();
+
+            // Ideally, BowlingEngine should accept ILaneRepository instead of LaneRepo.
+            var engine = new BowlingEngine(playerService, laneRepository, matchService);
+
+            //End of EF shenanigans
             // Simple log at start up.
             SingletonLogger.Instance.LogInformation("Application is starting...");
 
-            // Setup repositories and services.
-            PlayerRepo playerRepo = new PlayerRepo();
-            LaneRepo laneRepo = new LaneRepo(); // Get rid of this. 
-            MatchRepo matchRepo = new MatchRepo();
-
-            PlayerService playerService = new PlayerService(playerRepo);
-            MatchService matchService = new MatchService(matchRepo);
-            MemberService memberService = new MemberService(playerRepo);
-
-            // The BowlingEngine orchestrates the main game flow
-            BowlingEngine engine = new BowlingEngine(playerService, laneRepo, matchService);
-
-            // A list of meny options, each linking an ID, a description, and a command to execute.
             List<MainMenu> menuOptions = new List<MainMenu>
             {
                 new MainMenu

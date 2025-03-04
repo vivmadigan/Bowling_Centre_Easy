@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Bowling_Centre_Easy.Interfaces;
 
 namespace Bowling_Centre_Easy.Repos
 {
-    public class LaneRepo
+    public class LaneRepo : ILaneRepository
     {
         private List<BowlingLane> _lanes;
 
@@ -28,9 +29,9 @@ namespace Bowling_Centre_Easy.Repos
         }
 
         // Mark a lane as in use or free.
-        public void MarkLaneAsUsed(Guid laneId, bool inUse)
+        public void MarkLaneAsUsed(int laneNumber, bool inUse)
         {
-            BowlingLane lane = _lanes.FirstOrDefault(l => l.BowlingLaneID == laneId);
+            BowlingLane lane = _lanes.FirstOrDefault(l => l.BowlingLaneID == laneNumber);
             if (lane != null)
             {
                 lane.InUse = inUse;

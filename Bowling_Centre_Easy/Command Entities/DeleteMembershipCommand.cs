@@ -7,6 +7,7 @@ using Bowling_Centre_Easy.Entities;
 using Bowling_Centre_Easy.Interfaces;
 using Bowling_Centre_Easy.Logger;
 using Bowling_Centre_Easy.Services;
+using Bowling_Centre_Easy.Abstract;
 
 namespace Bowling_Centre_Easy.Command_Entities
 {

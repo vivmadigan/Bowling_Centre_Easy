@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Bowling_Centre_Easy.Abstract;
 
 namespace Bowling_Centre_Easy.Core
 {
@@ -18,13 +19,13 @@ namespace Bowling_Centre_Easy.Core
     public class BowlingEngine
     {
         private readonly PlayerService _playerService;
-        private readonly LaneRepo _laneRepo;
+        private readonly ILaneRepository _laneRepo;
         private readonly MatchService _matchService;
 
         /// <summary>
         /// Constructor injecting the necessary services and repositories.
         /// </summary>
-        public BowlingEngine(PlayerService playerService, LaneRepo laneRepo, MatchService matchService)
+        public BowlingEngine(PlayerService playerService, ILaneRepository laneRepo, MatchService matchService)
         {
             _playerService = playerService;
             _laneRepo = laneRepo;
@@ -201,7 +202,7 @@ namespace Bowling_Centre_Easy.Core
             }
 
             // Mark the chosen lane as in use.
-            _laneRepo.MarkLaneAsUsed(selectedLane.BowlingLaneID, true);
+            _laneRepo.MarkLaneAsUsed(selectedLane.LaneNumber, true);
             SingletonLogger.Instance.LogInformation($"User selected lane {selectedLane.LaneNumber}. Lane marked in use.");
             return selectedLane;
         }
@@ -320,6 +321,10 @@ namespace Bowling_Centre_Easy.Core
             }
             SingletonLogger.Instance.LogInformation($"Match {match.MatchID} ended successfully.");
 
+            _laneRepo.MarkLaneAsUsed(match.BowlingLane.LaneNumber, false);
+            SingletonLogger.Instance.LogInformation($"Bowling Lane Number {match.BowlingLane.LaneNumber} is now set to {match.BowlingLane.InUse}: False means its ready to use again.");
+
+
             // Prompt if user wants to play again.
             Console.Write("\nWould you like to play again? (Y/N): ");
             bool playAgain = ReadYesNo();
@@ -368,7 +373,7 @@ namespace Bowling_Centre_Easy.Core
             string guestName = Console.ReadLine();
 
             // Use a factory for consistent member creation.
-            IMember guestMember = MemberFactory.CreateMember("guest", guestName, null);
+            BaseMember guestMember = MemberFactory.CreateMember("guest", guestName, null);
             Player guest = new Player
             {
                 MemberInfo = guestMember,
